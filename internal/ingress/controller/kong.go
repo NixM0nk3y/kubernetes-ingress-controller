@@ -186,7 +186,7 @@ func (n *NGINXController) syncGlobalPlugins() error {
 				}
 				_, res := client.Plugins().Patch(pluginInKong.ID, p)
 				if res.StatusCode != http.StatusOK {
-					return errors.Wrap(res.Error(), fmt.Sprintf("updateing a global Kong plugin %v", p))
+					return errors.Wrap(res.Error(), fmt.Sprintf("updating a global Kong plugin %v", p))
 				}
 			}
 		}
