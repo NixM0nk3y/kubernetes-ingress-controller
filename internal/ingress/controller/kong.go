@@ -26,6 +26,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+        "encoding/hex"
 
 	"github.com/imdario/mergo"
 
@@ -231,7 +232,14 @@ func syncTargets(upstream string, ingressEndpopint *ingress.Backend, client *kon
 
 	newTargets := sets.NewString()
 	for _, endpoint := range ingressEndpopint.Endpoints {
-		nt := net.JoinHostPort(endpoint.Address, endpoint.Port)
+
+                host := endpoint.Address
+
+                if byteIndex(host, ':') >= 0 {
+                        host = FullIPv6(endpoint.Address)
+                }
+
+		nt := net.JoinHostPort(host, endpoint.Port)
 		if !newTargets.Has(nt) {
 			newTargets.Insert(nt)
 		}
@@ -271,6 +279,35 @@ func syncTargets(upstream string, ingressEndpopint *ingress.Backend, client *kon
 	}
 
 	return nil
+}
+
+//
+//
+//
+func FullIPv6(Host string) string {
+
+        addr := net.ParseIP(Host)
+
+	dst := make([]byte, hex.EncodedLen(len(addr)))
+	_ = hex.Encode(dst, addr)
+	return string(dst[0:4]) + ":" +
+		string(dst[4:8]) + ":" +
+		string(dst[8:12]) + ":" +
+		string(dst[12:16]) + ":" +
+		string(dst[16:20]) + ":" +
+		string(dst[20:24]) + ":" +
+		string(dst[24:28]) + ":" +
+		string(dst[28:])
+}
+
+// utility functions from net/parse.go
+func byteIndex(s string, c byte) int {
+	for i := 0; i < len(s); i++ {
+		if s[i] == c {
+			return i
+		}
+	}
+	return -1
 }
 
 // syncServices reconciles the state between the ingress controller and
